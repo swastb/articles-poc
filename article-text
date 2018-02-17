@@ -1,0 +1,79 @@
+
+
+Enough of coding now.Lets see you application running in place. By this time you must be ready with your source code which is running perfectly in you local machine. But we do not want our code to end up running in your local setup only. Rather we want to see it running with flying colors in production. (We love our code as our baby and we want to see it successful all the time) But like we send our babies to school or guide them the right path to success, We need to guide our application too. So lets take a ride to the Devops world and try giving our source code the correct path to production. 
+
+Welcome to Docker world. 
+Docker needs no introduction. If you feel you still need a guide, feel free to take a look here https://docs.docker.com/get-started/
+
+Going forward I assume that you have docker CE installed in your machine. The concepts that we will be using here are following
+
+1. Dockerfile : It is a text document which contains all the instruction which are needed to build a docker image. Using instruction set of Docker file we can write steps which will copy files, do installation etc.
+For more reference please visit 
+https://docs.docker.com/engine/reference/builder/
+2. Docker compose :- It is a tool using which we can create and spawn multiple containers. It helps to build the required environemnt with a single command. 
+
+As shown in the micro service architecture diagram we will be creating individual container for each services. So below will be list of containers for our example. 
+1. Config Server
+2. EmployeeService
+3. Employee Board Service
+4. Employee Dashboard Service
+5. Gateway Service
+
+Docker configuration for Config Server
+
+we will make sure of the following for the Config Server container. 
+
+a) The container should container our config server jar file. Here we will pick the jar file from local machine. In real life scenario we should be pusing the jar file to an Artifact Repository Manager system such as Nexus or Artifactory and the container should download the file from the repo Manager. 
+b) The config server should be available on the port 8888.
+c) As mentioned above we will have config server to read the configuration from a file location, so we will make sure that those properties file can be retrieved even if the container goes down. 
+
+1. Create a folder called config-repo which will contain the required properties file. 
+ # mkdir config-repo
+ # cd config-repo
+ # echo "user.role=Developer" > user-dev.properties
+ # echo "user.role=Production" > user-prod.properties
+
+Come back to the parent folder with create a Docker file called Dockerfile. This docker file will create out base image which contain java.
+
+ # cd ../
+ # vi Dockerfile
+
+put the below content
+
+FROM alpine:edge
+MAINTAINER swastika
+RUN apk add --no-cache openjdk8
+
+FROM: This Keyword, tells Docker to use a given image with its tag as build-base. 
+MAINTAINER: A MAINTAINER is the author of an image
+RUN: This command will installed openjdk8 in the system.
+
+Execute the below command to create the base Docker image
+#docker build --tag=alpine-jdk:base --rm=true .
+
+After the base image is built successfully, it is time to create the docker image for Config Server. 
+
+2. Create a folder called files and place the config server jar file in the directory 
+
+3. Create a file called Dockerfile-configserver with the below content
+
+FROM alpine-jdk:base
+MAINTAINER swastika
+COPY files/employeeconfigserver.jar /opt/lib/
+COPY config-repo /root
+ENTRYPOINT ["/usr/bin/java"]
+CMD ["-jar", "/opt/lib/employeeconfigserver.jar"]
+VOLUME /var/lib/config-repo
+EXPOSE 8888
+
+Here we have mentioned to built the image from previously create alpine-jdk image. We will copy the jar file named employeeconfigserver.jar in the /opt/lib location and also copy the config-repo to /root directory.  When the container starts up we want the config server to start running, hence the ENTRYPOINT and CMD is set to run the java command. We need to mount a volume to share the configuration files from outside the container, VOLUME command helps us to achieve that. The config server should be accessible to the outside world with the port 8888, thats why we have EXPOSE 8888. 
+
+Now let us build the docker image
+
+# docker build --file=Dockerfile-configserver --tag=config-server:latest --rm=true .
+
+
+
+
+
+
