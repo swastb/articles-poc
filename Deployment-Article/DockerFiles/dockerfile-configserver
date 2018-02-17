@@ -1,7 +1,8 @@
 FROM alpine-jdk:base
 MAINTAINER swastika
 COPY files/employeeconfigserver.jar /opt/lib/
-COPY config-repo /root
+RUN mkdir /root/config-repo
+COPY config-repo /root/config-repo
 ENTRYPOINT ["/usr/bin/java"]
 CMD ["-jar", "/opt/lib/employeeconfigserver.jar"]
 VOLUME /var/lib/config-repo

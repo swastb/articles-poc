@@ -1,11 +1,11 @@
 
 
-Enough of coding now.Lets see you application running in place. By this time you must be ready with your source code which is running perfectly in you local machine. But we do not want our code to end up running in your local setup only. Rather we want to see it running with flying colors in production. (We love our code as our baby and we want to see it successful all the time) But like we send our babies to school or guide them the right path to success, We need to guide our application too. So lets take a ride to the Devops world and try giving our source code the correct path to production. 
+Enough of coding now.Lets see your application running in place. By this time you must be ready with your source code which is running perfectly in you local machine. But we do not want our code to end up running in your local setup only. Rather we want to see it running with flying colors in production. (We love our code as our baby and we want to see it successful all the time) But as we send our babies to school or guide them the right path to success, We need to guide our application too. So lets take a ride to the Devops world and try giving our source code the correct path to production. 
 
 Welcome to Docker world. 
 Docker needs no introduction. If you feel you still need a guide, feel free to take a look here https://docs.docker.com/get-started/
 
-Going forward I assume that you have docker CE installed in your machine. The concepts that we will be using here are following
+Going forward I assume that you have docker CE installed in your machine. The concepts that we will be using here are as following
 
 1. Dockerfile : It is a text document which contains all the instruction which are needed to build a docker image. Using instruction set of Docker file we can write steps which will copy files, do installation etc.
 For more reference please visit 
@@ -41,7 +41,7 @@ Come back to the parent folder with create a Docker file called Dockerfile. This
 put the below content
 
 FROM alpine:edge
-MAINTAINER swastika
+MAINTAINER javaonfly
 RUN apk add --no-cache openjdk8
 
 FROM: This Keyword, tells Docker to use a given image with its tag as build-base. 
@@ -58,9 +58,10 @@ After the base image is built successfully, it is time to create the docker imag
 3. Create a file called Dockerfile-configserver with the below content
 
 FROM alpine-jdk:base
-MAINTAINER swastika
+MAINTAINER javaonfly
 COPY files/employeeconfigserver.jar /opt/lib/
-COPY config-repo /root
+RUN mkdir /root/config-repo
+COPY config-repo /root/config-repo
 ENTRYPOINT ["/usr/bin/java"]
 CMD ["-jar", "/opt/lib/employeeconfigserver.jar"]
 VOLUME /var/lib/config-repo
@@ -68,10 +69,17 @@ EXPOSE 8888
 
 Here we have mentioned to built the image from previously create alpine-jdk image. We will copy the jar file named employeeconfigserver.jar in the /opt/lib location and also copy the config-repo to /root directory.  When the container starts up we want the config server to start running, hence the ENTRYPOINT and CMD is set to run the java command. We need to mount a volume to share the configuration files from outside the container, VOLUME command helps us to achieve that. The config server should be accessible to the outside world with the port 8888, thats why we have EXPOSE 8888. 
 
-Now let us build the docker image
+Now let us build the docker image and tag it as config-server
 
 # docker build --file=Dockerfile-configserver --tag=config-server:latest --rm=true .
 
+Now let us create a docker volume 
+# docker volume create --name=config-repo
+
+# docker run --name=config-server --publish=8888:8888 --volume=config-repo:/var/lib/config-repo config-server:latest
+
+
+http://www.baeldung.com/dockerizing-spring-boot-application
 
 
 
