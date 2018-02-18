@@ -59,15 +59,15 @@ After the base image is built successfully, it is time to create the docker imag
 
 FROM alpine-jdk:base
 MAINTAINER javaonfly
-COPY files/employeeconfigserver.jar /opt/lib/
-RUN mkdir /root/config-repo
-COPY config-repo /root/config-repo
+COPY files/MicroserviceConfigServer.jar /opt/lib/
+RUN mkdir /var/lib/config-repo
+COPY config-repo /var/lib/config-repo
 ENTRYPOINT ["/usr/bin/java"]
-CMD ["-jar", "/opt/lib/employeeconfigserver.jar"]
+CMD ["-jar", "/opt/lib/MicroserviceConfigServer.jar"]
 VOLUME /var/lib/config-repo
-EXPOSE 8888
+EXPOSE 9090
 
-Here we have mentioned to built the image from previously create alpine-jdk image. We will copy the jar file named employeeconfigserver.jar in the /opt/lib location and also copy the config-repo to /root directory.  When the container starts up we want the config server to start running, hence the ENTRYPOINT and CMD is set to run the java command. We need to mount a volume to share the configuration files from outside the container, VOLUME command helps us to achieve that. The config server should be accessible to the outside world with the port 8888, thats why we have EXPOSE 8888. 
+Here we have mentioned to built the image from previously create alpine-jdk image. We will copy the jar file named employeeconfigserver.jar in the /opt/lib location and also copy the config-repo to /root directory.  When the container starts up we want the config server to start running, hence the ENTRYPOINT and CMD is set to run the java command. We need to mount a volume to share the configuration files from outside the container, VOLUME command helps us to achieve that. The config server should be accessible to the outside world with the port 9090, thats why we have EXPOSE 9090. 
 
 Now let us build the docker image and tag it as config-server
 
@@ -76,8 +76,26 @@ Now let us build the docker image and tag it as config-server
 Now let us create a docker volume 
 # docker volume create --name=config-repo
 
-# docker run --name=config-server --publish=8888:8888 --volume=config-repo:/var/lib/config-repo config-server:latest
+# docker run --name=config-server --publish=9090:9090 --volume=config-repo:/var/lib/config-repo config-server:latest
 
+Phew !! Once we run the above command we should be able to see a docker container up and running. If we go to browser and hit the url http://localhost:9090/config/default/, we should be able access the properties as well. 
+
+Similarly we need to create docker file for EurekaServer which will be running on port 9091. The Dockerfile for Eureka Server should be as below
+
+FROM alpine-jdk:base
+MAINTAINER javaonfly
+COPY files/MicroserviceEurekaServer.jar /opt/lib/
+ENTRYPOINT ["/usr/bin/java"]
+CMD ["-jar", "/opt/lib/MicroserviceEurekaServer.jar"]
+EXPOSE 9091
+
+To build the image use the command as
+docker build --file=Dockerfile-EurekaServer --tag=eureka-server:latest --rm=true .
+docker run --name=eureka-server --publish=9091:9091 eureka-server:latest
+
+Now its time deploy our actualy MicroServices, The steps should be similar but only thing we need to remember is our microservices are depedendent on ConfigServer and EurekaServer. So we always need to make sure that before we start our microservices the above 2 are up and running. So there are depdencies involved among containers. So it is time to expore Docker Compose. Its a beautiful way to make sure that containers are getting spawned maintaining a certain order. 
+
+docker build --file=Dockerfile-EmployeeSearch --tag=employee-search:latest --rm=true .
 
 http://www.baeldung.com/dockerizing-spring-boot-application
 

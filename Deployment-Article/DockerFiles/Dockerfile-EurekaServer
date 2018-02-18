@@ -1,0 +1,6 @@
+FROM alpine-jdk:base
+MAINTAINER javaonfly
+COPY files/MicroserviceEurekaServer.jar /opt/lib/
+ENTRYPOINT ["/usr/bin/java"]
+CMD ["-jar", "/opt/lib/MicroserviceEurekaServer.jar"]
+EXPOSE 9091
