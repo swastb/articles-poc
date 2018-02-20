@@ -1,4 +1,4 @@
-# articles-poc
+# Guide to MicroService Deployment using Docker
 
 Docker needs no introduction. If you feel you still need a guide, feel free to take a look here https://docs.docker.com/get-started/
 
